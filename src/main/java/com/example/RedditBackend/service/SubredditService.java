@@ -2,15 +2,17 @@ package com.example.RedditBackend.service;
 
 
 import com.example.RedditBackend.dto.SubredditDto;
+import com.example.RedditBackend.exception.SpringRedditException;
+import com.example.RedditBackend.mapper.SubredditMapper;
 import com.example.RedditBackend.model.Subreddit;
 import com.example.RedditBackend.repository.SubredditRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
-
-import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -19,10 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class SubredditService {
 
     private final SubredditRepository subredditRepository;
+    private final SubredditMapper subredditMapper;
 
-   @Transactional
+
+    @Transactional
     public SubredditDto save(SubredditDto subredditDto) {
-      Subreddit subreddit= subredditRepository.save(mapSubredditdto(subredditDto));
+      Subreddit subreddit= subredditRepository.save(subredditMapper.mapDtoToSubreddit(subredditDto));
       subredditDto.setId(subreddit.getId());
       return subredditDto;
     }
@@ -31,7 +35,7 @@ public class SubredditService {
     public List<SubredditDto> getAll() {
         return subredditRepository.findAll()
                 .stream()
-                .map(this::mapToDto)
+                .map(subredditMapper::mapSubredditToDto)
                 .collect(Collectors.toList());
 
     }
@@ -43,6 +47,11 @@ public class SubredditService {
 
     private Subreddit mapSubredditdto(SubredditDto subredditDto){
         return  Subreddit.builder().name(subredditDto.getName()).description(subredditDto.getDescription()).build();
+    }
+    public SubredditDto getSubreddit(Long id) {
+        Subreddit subreddit = subredditRepository.findById(id)
+                .orElseThrow(() -> new SpringRedditException("No subreddit found with ID - " + id));
+        return subredditMapper.mapSubredditToDto(subreddit);
     }
 
 }
